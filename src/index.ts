@@ -26,7 +26,7 @@ app.get("/api", (c) =>
 	c.json({
 		meow: true,
 		discord: "https://discord.gg/r5bmSXBEPC",
-		docs: "/openapi",
+		docs: "/api/openapi",
 	}),
 );
 

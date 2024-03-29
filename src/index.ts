@@ -20,7 +20,7 @@ app.doc("/api/openapi.json", {
 	},
 });
 
-app.get("/api/openapi", swaggerUI({ url: "/openapi.json" }));
+app.get("/api/openapi", swaggerUI({ url: "/api/openapi.json" }));
 
 app.get("/api", (c) =>
 	c.json({

@@ -65,7 +65,7 @@ app.get("/scrape", zValidator("query", ScrapeParams), async (c) => {
 
 			if (existingBuild) {
 				scraping = false;
-				return c.redirect(`/builds/${build.build.build_hash}`);
+				return c.redirect(`/api/builds/${build.build.build_hash}`);
 			}
 		}
 
@@ -92,7 +92,7 @@ app.get("/scrape", zValidator("query", ScrapeParams), async (c) => {
 	if (no_redirect) {
 		return c.json(build.build);
 	}
-	return c.redirect(`/builds/${build.build.build_hash}`);
+	return c.redirect(`/api/builds/${build.build.build_hash}`);
 });
 
 /**

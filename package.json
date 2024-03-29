@@ -1,0 +1,31 @@
+{
+  "name": "@dsale/runtime",
+  "module": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "format": "biome format --write ./src",
+    "lint": "biome lint ./src",
+    "check": "biome check --apply ./src",
+    "build": "bun run ./build.ts"
+  },
+  "dependencies": {
+    "@dsale/scraper": "^0.0.1-beta.9",
+    "@hono/swagger-ui": "^0.2.1",
+    "@hono/zod-openapi": "^0.9.9",
+    "@hono/zod-validator": "^0.2.1",
+    "hono": "^4.1.4",
+    "mongoose": "^8.2.3",
+    "mongoose-aggregate-paginate-v2": "^1.0.7",
+    "mongoose-paginate-v2": "^1.8.0",
+    "redis": "^4.6.13"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^1.6.3",
+    "@types/bun": "latest",
+    "@types/dot-object": "^2.1.6",
+    "@types/mongoose-aggregate-paginate-v2": "^1.0.12"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

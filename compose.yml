@@ -1,0 +1,43 @@
+version: "3.8"
+
+name: discord-build-logger
+
+services:
+  mongo:
+    image: mongo:latest
+    restart: unless-stopped
+    ports:
+      - 27017:27017 # This should be commented out in production
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS}
+
+  mongo-express:
+    image: mongo-express
+    restart: unless-stopped
+    ports:
+      - 8081:8081 # This should be commented out in production
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_USER}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_PASS}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USER}:${MONGO_PASS}@mongo:27017/
+
+  # keydb:
+  #   image: eqalpha/keydb
+  #   restart: unless-stopped
+  #   ports:
+  #     - 6379:6379
+
+  api:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    ports:
+      - 3000:3000
+    environment:
+      MONGO_USER: ${MONGO_USER}
+      MONGO_PASS: ${MONGO_PASS}
+      # KEYDB_PASS: ${KEYDB_PASS}
+    depends_on:
+      - mongo
+      # - keydb

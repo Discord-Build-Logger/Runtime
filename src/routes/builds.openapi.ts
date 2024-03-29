@@ -1,4 +1,4 @@
-import Discord from "@dsale/scraper/types/discord";
+import Discord from "@dsale/scraper/src/types/discord";
 import { createRoute, z } from "@hono/zod-openapi";
 
 export const zBuildSchema = ({ with_files = true, with_experiments = true }) =>

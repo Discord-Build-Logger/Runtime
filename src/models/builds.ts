@@ -1,4 +1,4 @@
-import { Discord } from "@dsale/scraper/types/discord";
+import { Discord } from "@dsale/scraper/src/types/discord";
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
 import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
@@ -12,10 +12,10 @@ const BuildSchema = new Schema({
 	build_number: Number,
 	build_date: Date,
 	release_channels: {
-		[Discord.ReleaseChannel.stable]: Date,
-		[Discord.ReleaseChannel.ptb]: Date,
-		[Discord.ReleaseChannel.canary]: Date,
-		[Discord.ReleaseChannel.staging]: Date,
+		[Discord.ReleaseChannel.stable as string]: Date,
+		[Discord.ReleaseChannel.ptb as string]: Date,
+		[Discord.ReleaseChannel.canary as string]: Date,
+		[Discord.ReleaseChannel.staging as string]: Date,
 	},
 	environment: {
 		type: String,

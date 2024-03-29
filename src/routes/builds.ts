@@ -1,8 +1,10 @@
-import { scrapeDiscordWeb } from "@dsale/scraper";
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { scrapeDiscordWeb } from "@dsale/scraper/src/index";
+import type Discord from "@dsale/scraper/src/types/discord";
+import { OpenAPIHono, z } from "@hono/zod-openapi";
 import { zValidator } from "@hono/zod-validator";
 import { Builds } from "../models/builds";
 import { Routes } from "./builds.openapi";
+import { scrapeBuildToDB } from "./builds.utils";
 
 const app = new OpenAPIHono();
 
@@ -41,59 +43,82 @@ app.openapi(Routes.root, async (c) => {
 });
 
 const ScrapeParams = z.object({
-	force: z.boolean({ coerce: true }).default(false),
 	release_channel: z.enum(["stable", "ptb", "canary"]).default("canary"),
 	no_redirect: z.boolean({ coerce: true }).default(false),
+	// TODO: https://github.com/colinhacks/zod/pull/2989
+	wait: z
+		.enum(["true", "false"])
+		.default("true")
+		.transform((v) => v !== "false"),
+	authorization: z.string().optional(),
 });
 
-let scraping = false;
-app.get("/scrape", zValidator("query", ScrapeParams), async (c) => {
-	if (scraping) {
-		return c.text("Already scraping. Please check back soon.", 409);
-	}
+const ScrapeAuth = z.object({
+	Authorization: z.string().optional(),
+});
 
-	scraping = true;
+const scraping: Record<Discord.ReleaseChannel, boolean> = {
+	staging: false,
+	canary: false,
+	ptb: false,
+	stable: false,
+};
 
-	const { force, release_channel, no_redirect } = c.req.valid("query");
-	const build = await scrapeDiscordWeb(release_channel);
+// let scraping = false;
+app.get(
+	"/scrape",
+	zValidator("query", ScrapeParams),
+	zValidator("header", ScrapeAuth),
+	async (c) => {
+		const authorization =
+			c.req.valid("header").Authorization || c.req.valid("query").authorization;
 
-	try {
-		if (!force) {
-			const existingBuild = await Builds.findOne({
-				build_hash: build.build.build_hash,
-			});
-
-			if (existingBuild) {
-				scraping = false;
-				return c.redirect(`/api/builds/${build.build.build_hash}`);
-			}
+		if (!authorization || authorization !== process.env.ADMIN_ACCESS_KEY) {
+			return c.text("Unauthorized", 401);
 		}
 
-		await build.beginScrapingFiles();
+		const { release_channel, no_redirect, wait } = c.req.valid("query");
 
-		await Builds.updateOne(
-			{
-				build_hash: build.build.build_hash,
-			},
-			{
-				$set: build.build,
-			},
-			{
-				upsert: true,
-			},
-		);
-	} catch (e) {
-		scraping = false;
-		throw e;
-	}
+		if (scraping[release_channel]) {
+			return c.text("Already scraping. Please check back soon.", 409);
+		}
 
-	scraping = false;
+		scraping[release_channel] = true;
 
-	if (no_redirect) {
-		return c.json(build.build);
-	}
-	return c.redirect(`/api/builds/${build.build.build_hash}`);
-});
+		const build = await scrapeDiscordWeb(release_channel);
+
+		try {
+			const promise = scrapeBuildToDB(
+				build,
+				release_channel as Discord.ReleaseChannel,
+			);
+			if (!wait) {
+				promise.catch(console.error).finally(() => {
+					scraping[release_channel] = false;
+				});
+
+				return c.json({
+					message: "Scraping started",
+					build_hash: build.build.build_hash,
+				});
+			}
+
+			await promise;
+
+			scraping[release_channel] = false;
+		} catch (e) {
+			scraping[release_channel] = false;
+			throw e;
+		}
+
+		scraping[release_channel] = false;
+
+		if (no_redirect) {
+			return c.json(build.build);
+		}
+		return c.redirect(`/api/builds/${build.build.build_hash}`);
+	},
+);
 
 /**
  * This needs to run last because it's a wildcard route.

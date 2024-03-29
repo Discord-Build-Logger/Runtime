@@ -12,7 +12,7 @@ mongoose.connect(mongoUrl, {
 
 const app = new OpenAPIHono({ strict: false });
 
-app.doc("/openapi.json", {
+app.doc("/api/openapi.json", {
 	openapi: "3.0.0",
 	info: {
 		version: "0.0.1-beta.1",
@@ -20,9 +20,9 @@ app.doc("/openapi.json", {
 	},
 });
 
-app.get("/openapi", swaggerUI({ url: "/openapi.json" }));
+app.get("/api/openapi", swaggerUI({ url: "/openapi.json" }));
 
-app.get("/", (c) =>
+app.get("/api", (c) =>
 	c.json({
 		meow: true,
 		discord: "https://discord.gg/r5bmSXBEPC",
@@ -30,6 +30,6 @@ app.get("/", (c) =>
 	}),
 );
 
-app.route("/builds", Routes.Builds);
+app.route("/api/builds", Routes.Builds);
 
 export default app;

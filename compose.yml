@@ -44,3 +44,9 @@ services:
     depends_on:
       - mongo
       # - keydb
+
+  keepalive:
+    build: ../keepalive-new
+    restart: unless-stopped
+    env_file:
+      - .env

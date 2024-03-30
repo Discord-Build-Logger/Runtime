@@ -73,7 +73,7 @@ app.get(
 		const authorization =
 			c.req.valid("header").Authorization || c.req.valid("query").authorization;
 
-		if (!authorization || authorization !== process.env.ADMIN_ACCESS_KEY) {
+		if (!authorization || authorization !== process.env.API_ACCESS_KEY) {
 			return c.text("Unauthorized", 401);
 		}
 
@@ -119,10 +119,6 @@ app.get(
 		return c.redirect(`/api/builds/${build.build.build_hash}`);
 	},
 );
-
-/**
- * This needs to run last because it's a wildcard route.
- */
 app.openapi(Routes.getBuild, async (c) => {
 	const { build_hash } = c.req.valid("param");
 	const build = await Builds.findOne({

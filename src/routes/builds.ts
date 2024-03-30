@@ -95,6 +95,9 @@ app.get(
 			if (!wait) {
 				promise.catch(console.error).finally(() => {
 					scraping[release_channel] = false;
+
+					// TODO: This is a hack... Not sure why memory isn't being GC'd.
+					Bun.gc(true);
 				});
 
 				return c.json({
@@ -112,6 +115,9 @@ app.get(
 		}
 
 		scraping[release_channel] = false;
+
+		// TODO: This is a hack... Not sure why memory isn't being GC'd.
+		Bun.gc(true);
 
 		if (no_redirect) {
 			return c.json(build.build);

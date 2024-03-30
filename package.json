@@ -9,7 +9,7 @@
     "build": "bun run ./build.ts"
   },
   "dependencies": {
-    "@dsale/scraper": "^0.0.1-beta.10",
+    "@dsale/scraper": "^0.0.1-beta.11",
     "@hono/swagger-ui": "^0.2.1",
     "@hono/zod-openapi": "^0.9.9",
     "@hono/zod-validator": "^0.2.1",

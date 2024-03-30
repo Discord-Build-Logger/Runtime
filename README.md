@@ -1,8 +1,3 @@
 # @dsale/runtime
 
-To install:
-
-```bash
-bun add @dsale/runtime
-```
-
+https://discord.sale/api

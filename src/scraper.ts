@@ -46,6 +46,13 @@ export async function scrapeBuildWithWorker(
 			event_type: "start",
 			release_channel,
 		});
+
+		setTimeout(() => {
+			reject({
+				status: "build_failed",
+				message: "Timeout",
+			});
+		}, 30_000); // 30 seconds timeout
 	});
 
 	// @ts-expect-error ts is silly

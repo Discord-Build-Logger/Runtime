@@ -3,8 +3,8 @@ import { OpenAPIHono } from "@hono/zod-openapi";
 import mongoose from "mongoose";
 import { Routes } from "./routes";
 
-const { MONGO_USER, MONGO_PASS, MONGO_DB } = process.env;
-const mongoUrl = `mongodb://${MONGO_USER}:${MONGO_PASS}@mongo:27017/${MONGO_DB}?authSource=admin`;
+const { MONGO_HOST, MONGO_USER, MONGO_PASS, MONGO_DB } = process.env;
+const mongoUrl = `mongodb://${MONGO_USER}:${MONGO_PASS}@${MONGO_HOST}/${MONGO_DB}?authSource=admin`;
 
 mongoose.connect(mongoUrl, {
 	authSource: "admin",

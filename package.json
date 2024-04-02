@@ -6,7 +6,9 @@
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "check": "biome check --apply ./src",
-    "build": "bun run ./build.ts"
+    "build": "bun run ./build.ts",
+    "exec:scraper-dev": "bun run ./src/worker.ts",
+    "exec:scraper-dist": "bun run ./dist/worker.js"
   },
   "dependencies": {
     "@dsale/scraper": "^0.0.1-beta.12",

@@ -3,8 +3,8 @@ import type Discord from "@dsale/scraper/src/types/discord";
 import { OpenAPIHono, z } from "@hono/zod-openapi";
 import { zValidator } from "@hono/zod-validator";
 import { Builds } from "../models/builds";
+import { scrapeBuildWithWorker } from "../scraper";
 import { Routes } from "./builds.openapi";
-import { scrapeBuildToDB } from "./builds.utils";
 
 const app = new OpenAPIHono();
 
@@ -44,12 +44,6 @@ app.openapi(Routes.root, async (c) => {
 
 const ScrapeParams = z.object({
 	release_channel: z.enum(["stable", "ptb", "canary"]).default("canary"),
-	no_redirect: z.boolean({ coerce: true }).default(false),
-	// TODO: https://github.com/colinhacks/zod/pull/2989
-	wait: z
-		.enum(["true", "false"])
-		.default("true")
-		.transform((v) => v !== "false"),
 	authorization: z.string().optional(),
 });
 
@@ -62,9 +56,8 @@ const scraping: Record<Discord.ReleaseChannel, boolean> = {
 	canary: false,
 	ptb: false,
 	stable: false,
-};
+} as const;
 
-// let scraping = false;
 app.get(
 	"/scrape",
 	zValidator("query", ScrapeParams),
@@ -77,7 +70,7 @@ app.get(
 			return c.text("Unauthorized", 401);
 		}
 
-		const { release_channel, no_redirect, wait } = c.req.valid("query");
+		const { release_channel } = c.req.valid("query");
 
 		if (scraping[release_channel]) {
 			return c.text("Already scraping. Please check back soon.", 409);
@@ -85,46 +78,23 @@ app.get(
 
 		scraping[release_channel] = true;
 
-		const build = await scrapeDiscordWeb(release_channel);
-
-		try {
-			const promise = scrapeBuildToDB(
-				build,
-				release_channel as Discord.ReleaseChannel,
-			);
-			if (!wait) {
-				promise.catch(console.error).finally(() => {
-					scraping[release_channel] = false;
-
-					// TODO: This is a hack... Not sure why memory isn't being GC'd.
-					Bun.gc(true);
-				});
-
-				return c.json({
-					message: "Scraping started",
-					build_hash: build.build.build_hash,
-				});
-			}
-
-			await promise;
-
-			scraping[release_channel] = false;
-		} catch (e) {
-			scraping[release_channel] = false;
-			throw e;
-		}
+		const result = await scrapeBuildWithWorker(release_channel as any).catch(
+			console.error,
+		);
 
 		scraping[release_channel] = false;
 
-		// TODO: This is a hack... Not sure why memory isn't being GC'd.
-		Bun.gc(true);
-
-		if (no_redirect) {
-			return c.json(build.build);
+		if (!result?.build_hash) {
+			return c.json({
+				status: "build_failed",
+				message: "Failed to scrape build",
+			});
 		}
-		return c.redirect(`/api/builds/${build.build.build_hash}`);
+
+		return c.redirect(`/api/builds/${result.build_hash}`);
 	},
 );
+
 app.openapi(Routes.getBuild, async (c) => {
 	const { build_hash } = c.req.valid("param");
 	const build = await Builds.findOne({

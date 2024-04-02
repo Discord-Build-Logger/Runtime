@@ -13,8 +13,8 @@ export interface ScrapeBuildResponse {
 }
 
 const exec_command = import.meta.file.endsWith(".js")
-	? "exec:scraper-dist"
-	: "exec:scraper-dev";
+	? "./dist/worker.js"
+	: "./src/worker.ts";
 
 export async function scrapeBuildWithWorker(
 	release_channel: Discord.ReleaseChannel,

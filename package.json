@@ -1,15 +1,19 @@
 {
   "name": "@dsale/runtime",
-  "module": "src/index.ts",
+  "main": "dist/index.mjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
   "type": "module",
   "scripts": {
     "format": "biome format --write ./src",
     "lint": "biome lint ./src",
     "check": "biome check --apply ./src",
-    "build": "bun run ./build.ts"
+    "start": "tsx ./src/index.ts",
+    "build": "pkgroll"
   },
   "dependencies": {
-    "@dsale/scraper": "^0.0.1-beta.12",
+    "@dsale/scraper": "0.0.1-beta.14",
+    "@hono/node-server": "^1.11.2",
     "@hono/swagger-ui": "^0.2.1",
     "@hono/zod-openapi": "^0.9.9",
     "@hono/zod-validator": "^0.2.1",
@@ -21,9 +25,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^1.6.3",
-    "@types/bun": "latest",
     "@types/dot-object": "^2.1.6",
-    "@types/mongoose-aggregate-paginate-v2": "^1.0.12"
+    "@types/node": "^20.12.13",
+    "pkgroll": "^2.1.1",
+    "tsx": "^4.11.0",
+    "typescript": "^5.4.5"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

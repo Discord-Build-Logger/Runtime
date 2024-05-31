@@ -1,14 +1,15 @@
-import { scrapeDiscordWeb } from "@dsale/scraper/src/index";
 import type Discord from "@dsale/scraper/src/types/discord";
 import { OpenAPIHono, z } from "@hono/zod-openapi";
 import { zValidator } from "@hono/zod-validator";
 import { Builds } from "../models/builds";
-import { scrapeBuildWithWorker } from "../scraper";
+// import { scrapeBuildWithWorker } from "../scraper";
 import { Routes } from "./builds.openapi";
+import { scrapeBuildToDB } from "./builds.utils";
+import { scrapeDiscordWeb } from "@dsale/scraper/src";
+import type DiscordWebScraper from "@dsale/scraper/src/app/discord_web";
 
 const app = new OpenAPIHono();
 
-// @ts-expect-error Paginator types don't detect customLabels
 // docs -> builds, totalDocs -> totalBuilds
 app.openapi(Routes.root, async (c) => {
 	const { page, limit, sort_by, sort_direction } = c.req.valid("query");
@@ -78,20 +79,37 @@ app.get(
 
 		scraping[release_channel] = true;
 
-		const result = await scrapeBuildWithWorker(release_channel as any).catch(
-			console.error,
-		);
+		// const result = await scrapeBuildWithWorker(release_channel as any).catch(
+		// 	console.error,
+		// );
+
+		let build!: DiscordWebScraper;
+
+		try {
+			build = await scrapeDiscordWeb(release_channel as any);
+			if (!build?.build?.build_hash) {
+				return c.json({
+					status: "build_failed",
+					message: "Failed to scrapeDiscordWeb",
+				});
+			}
+			await scrapeBuildToDB(build, release_channel as any);
+			scraping[release_channel] = false;
+		} catch (e) {
+			console.error(e);
+			scraping[release_channel] = false;
+		}
 
 		scraping[release_channel] = false;
 
-		if (!result?.build_hash) {
+		if (!build?.build?.build_hash) {
 			return c.json({
 				status: "build_failed",
-				message: "Failed to scrape build",
+				message: "No build hash found",
 			});
 		}
 
-		return c.redirect(`/api/builds/${result.build_hash}`);
+		return c.redirect(`/api/builds/${build.build.build_hash}`);
 	},
 );
 

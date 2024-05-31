@@ -46,7 +46,9 @@ services:
       # - keydb
 
   keepalive:
-    build: https://github.com/Discord-Build-Logger/KeepAlive.git
+    build: ../KeepAlive
     restart: unless-stopped
+    depends_on:
+      - api
     env_file:
       - .env

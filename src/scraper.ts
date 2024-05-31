@@ -1,5 +1,4 @@
 import type Discord from "@dsale/scraper/src/types/discord";
-import type { Subprocess } from "bun";
 import { Builds } from "./models/builds";
 import {
 	type InputMessageData,
@@ -7,42 +6,44 @@ import {
 	WorkerEvent,
 } from "./worker.types";
 
+import { Worker } from "node:worker_threads";
+
 export interface ScrapeBuildResponse {
 	status: "build_success" | "build_failed";
 	build_hash?: string;
 }
 
-const exec_command = import.meta.file.endsWith(".js")
-	? "./dist/worker.js"
-	: "./src/worker.ts";
+const exec_command = "./dist/worker.js";
 
 export async function scrapeBuildWithWorker(
 	release_channel: Discord.ReleaseChannel,
 ): Promise<ScrapeBuildResponse> {
-	let worker: Subprocess<"ignore", "pipe", "inherit">;
+	let worker: Worker;
+
+	// let worker: Subprocess<"ignore", "pipe", "inherit">;
 	const result: ScrapeBuildResponse = await new Promise((resolve, reject) => {
-		worker = Bun.spawn(["bun", "run", exec_command], {
-			async ipc(event: any) {
-				const result = await handler(event, release_channel);
-				if (result.status === "build_success") {
-					resolve(<ScrapeBuildResponse>{
-						status: "build_success",
-						build_hash: result.build_hash,
-					});
-				} else if (result.status === "build_failed") {
-					reject({
-						status: "build_failed",
-						message: result.message,
-					});
-				} else if (result.status === "request_scrape") {
-					worker.send(<InputMessageData>{
-						event_type: "scrape",
-					});
-				}
-			},
+		worker = new Worker(exec_command);
+
+		worker.on("message", async (event: OutputMessageData) => {
+			const result = await handler(event, release_channel);
+			if (result.status === "build_success") {
+				resolve(<ScrapeBuildResponse>{
+					status: "build_success",
+					build_hash: result.build_hash,
+				});
+			} else if (result.status === "build_failed") {
+				reject({
+					status: "build_failed",
+					message: result.message,
+				});
+			} else if (result.status === "request_scrape") {
+				worker.postMessage(<InputMessageData>{
+					event_type: "scrape",
+				});
+			}
 		});
 
-		worker.send(<InputMessageData>{
+		worker.postMessage(<InputMessageData>{
 			event_type: "start",
 			release_channel,
 		});

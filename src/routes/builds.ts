@@ -33,22 +33,22 @@ app.openapi(Routes.root, async (c) => {
 		.skip((page - 1) * limit)
 		.sort({ [sort_by]: sort_direction });
 
-	const totalBuilds = await Builds.countDocuments();
+	// const totalBuilds = await Builds.countDocuments();
 
-	const totalPages = Math.ceil(totalBuilds / limit);
-	const hasPrevPage = page > 1;
-	const hasNextPage = page < totalPages;
+	// const totalPages = Math.ceil(totalBuilds / limit);
+	// const hasPrevPage = page > 1;
+	// const hasNextPage = page < totalPages;
 
 	return c.json({
 		builds,
-		totalBuilds,
+		// totalBuilds,
 		limit,
 		page,
-		totalPages,
-		hasPrevPage,
-		hasNextPage,
-		prevPage: hasPrevPage ? page - 1 : null,
-		nextPage: hasNextPage ? page + 1 : null,
+		// totalPages,
+		// hasPrevPage,
+		// hasNextPage,
+		// prevPage: hasPrevPage ? page - 1 : null,
+		// nextPage: hasNextPage ? page + 1 : null,
 	}) as any;
 });
 

@@ -1,6 +1,5 @@
 import { Discord } from "@dsale/scraper/src/types/discord";
 import mongoose, { Schema, type InferSchemaType } from "mongoose";
-import aggregatePaginate from "mongoose-aggregate-paginate-v2";
 
 const BuildSchema = new Schema({
 	build_hash: {
@@ -41,8 +40,6 @@ const BuildSchema = new Schema({
 	},
 });
 
-BuildSchema.plugin(aggregatePaginate);
-
 BuildSchema.set("toJSON", {
 	versionKey: false,
 	transform: (_doc, ret) => {
@@ -52,7 +49,4 @@ BuildSchema.set("toJSON", {
 
 type BuildDocument = InferSchemaType<typeof BuildSchema>;
 
-export const Builds = mongoose.model<
-	BuildDocument,
-	mongoose.AggregatePaginateModel<BuildDocument>
->("Build", BuildSchema);
+export const Builds = mongoose.model<BuildDocument>("Build", BuildSchema);

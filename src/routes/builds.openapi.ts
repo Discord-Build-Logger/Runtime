@@ -1,7 +1,7 @@
 import Discord from "@dsale/scraper/src/types/discord";
 import { createRoute, z } from "@hono/zod-openapi";
 
-export const zBuildSchema = ({ with_files = true, with_experiments = true }) =>
+export const zBuildSchema = () =>
 	z.object({
 		build_hash: z.string(),
 		build_number: z.number(),
@@ -19,36 +19,33 @@ export const zBuildSchema = ({ with_files = true, with_experiments = true }) =>
 			Discord.Environment.development,
 		]),
 		GLOBAL_ENV: z.record(z.any()),
-		files: with_files
-			? z.array(
-					z.object({
-						path: z.string(),
-						tags: z.array(z.string()),
-					}),
-				)
-			: z.number(),
-		experiments: with_experiments ? z.array(z.record(z.any())) : z.number(),
+		files: z
+			.array(
+				z.object({
+					path: z.string(),
+					tags: z.array(z.string()),
+				}),
+			)
+			.optional(),
+		files_count: z.number().optional(),
+		experiments_count: z.number().optional(),
+		experiments: z.array(z.record(z.any())).optional(),
 		plugins: z.record(z.any()),
 		db_created_at: z.date(),
 		db_updated_at: z.date(),
 	});
 
 export const zBuildPaginatorSchema = z.object({
-	builds: zBuildSchema({
-		with_experiments: false,
-		with_files: false,
-	}),
+	builds: zBuildSchema(),
 	totalBuilds: z.number(),
 	limit: z.number(),
-	hasPrevPage: z.boolean(),
-	hasNextPage: z.boolean(),
 	page: z.number().optional(),
 	totalPages: z.number(),
+	hasPrevPage: z.boolean(),
+	hasNextPage: z.boolean(),
 	offset: z.number(),
 	prevPage: z.number().optional().nullable(),
 	nextPage: z.number().optional().nullable(),
-	pagingCounter: z.number(),
-	meta: z.any().optional(),
 });
 
 export const Routes = {
@@ -95,10 +92,7 @@ export const Routes = {
 				description: "Build information.",
 				content: {
 					"application/json": {
-						schema: zBuildSchema({
-							with_experiments: true,
-							with_files: true,
-						}),
+						schema: zBuildSchema(),
 					},
 				},
 			},

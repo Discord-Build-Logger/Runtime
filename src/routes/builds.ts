@@ -14,33 +14,42 @@ const app = new OpenAPIHono();
 app.openapi(Routes.root, async (c) => {
 	const { page, limit, sort_by, sort_direction } = c.req.valid("query");
 
-	const aggregate = Builds.aggregate([
+	const builds = await Builds.find(
+		{},
 		{
-			$project: {
-				_id: 0,
-				build_hash: 1,
-				build_number: 1,
-				build_date: 1,
-				release_channels: 1,
-				environment: 1,
-				db_created_at: 1,
-				db_updated_at: 1,
-				files: { $size: "$files" },
-				experiments: { $size: "$experiments" },
-			},
+			_id: 0,
+			build_hash: 1,
+			build_number: 1,
+			build_date: 1,
+			release_channels: 1,
+			environment: 1,
+			db_created_at: 1,
+			db_updated_at: 1,
+			files_count: { $size: "$files" },
+			experiments_count: { $size: "$experiments" },
 		},
-	]);
+	)
+		.limit(limit)
+		.skip((page - 1) * limit)
+		.sort({ [sort_by]: sort_direction });
 
-	const result = await Builds.aggregatePaginate(aggregate, {
-		page,
+	const totalBuilds = await Builds.countDocuments();
+
+	const totalPages = Math.ceil(totalBuilds / limit);
+	const hasPrevPage = page > 1;
+	const hasNextPage = page < totalPages;
+
+	return c.json({
+		builds,
+		totalBuilds,
 		limit,
-		sort: {
-			[sort_by]: sort_direction,
-		},
-		customLabels: { docs: "builds", totalDocs: "totalBuilds" },
-	});
-
-	return c.json(result);
+		page,
+		totalPages,
+		hasPrevPage,
+		hasNextPage,
+		prevPage: hasPrevPage ? page - 1 : null,
+		nextPage: hasNextPage ? page + 1 : null,
+	}) as any;
 });
 
 const ScrapeParams = z.object({
